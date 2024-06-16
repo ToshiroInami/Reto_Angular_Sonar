@@ -1,0 +1,95 @@
+.display-4 {
+  color: #333;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.table {
+  background-color: #fff;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f2f2f2;
+}
+
+.btn-group .btn {
+  font-size: 14px;
+  margin-right: 5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+}
+
+.btn-group .btn i {
+  margin-right: 0;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.btn-group {
+  margin-right: 10px;
+}
+
+.table th.col-id {
+  width: 1%;
+}
+
+.table th.col-title {
+  width: 16%;
+}
+
+.table th.col-date {
+  width: 10%;
+}
+
+.table th.col-time {
+  width: 6%;
+}
+
+.table th.col-image {
+  width: 5%;
+}
+
+.table th.col-feeds {
+  width: 15%;
+}
+
+.table th.col-authors {
+  width: 15%;
+}
+
+.table th.col-actions {
+  width: 2%;
+}
+
+.table img {
+  max-width: 90px;
+  max-height: 70px;
+}
+
+.btn-group .btn {
+  margin-right: 5px;
+}
+
+.actions-cell {
+  text-align: center;
+}

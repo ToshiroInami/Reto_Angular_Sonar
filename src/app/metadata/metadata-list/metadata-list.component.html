@@ -1,0 +1,319 @@
+<div class="container my-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-4">Lista de Metadatos</h1>
+    </div>
+    <div class="col text-right">
+      <button
+        *ngIf="showActive"
+        class="btn btn-primary"
+        (click)="addMetadata()"
+        style="margin-left: 10px"
+      >
+        <i class="fas fa-plus"></i> Agregar
+      </button>
+      <button
+        *ngIf="!showActive"
+        class="btn btn-success"
+        (click)="toggleActiveInactive()"
+        style="margin-left: 10px"
+      >
+        <i class="fas fa-eye"></i>
+      </button>
+      <button
+        *ngIf="showActive"
+        class="btn btn-warning"
+        (click)="toggleActiveInactive()"
+        style="margin-left: 10px"
+      >
+        <i class="fas fa-eye-slash"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Campos de búsqueda -->
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label for="searchTitle">Buscar por Título</label>
+      <input
+        type="text"
+        class="form-control"
+        id="searchTitle"
+        [(ngModel)]="titleFilter"
+        (input)="searchByTitle()"
+        placeholder="Ingrese el título a buscar"
+      />
+    </div>
+    <div class="col-md-6 mb-3">
+      <label for="searchDate">Buscar por Fecha</label>
+      <input
+        type="date"
+        class="form-control"
+        id="searchDate"
+        [(ngModel)]="dateFilter"
+        (input)="searchByDate()"
+      />
+    </div>
+  </div>
+
+  <!-- Formulario emergente -->
+  <div *ngIf="showForm" class="modal d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Agregar Metadato</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="metadataUrl">URL del Metadato</label>
+            <input
+              type="text"
+              class="form-control"
+              id="metadataUrl"
+              [(ngModel)]="newMetadataUrl"
+              placeholder="Ingrese la URL del metadato"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-success"
+            (click)="submitMetadata(); showForm = false"
+          >
+            <i class="fas fa-check"></i> Guardar
+          </button>
+          <button class="btn btn-secondary" (click)="showForm = false">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Fin del formulario emergente -->
+
+  <div *ngIf="metadataList.length === 0" class="alert alert-info text-center">
+    No hay metadatos disponibles.
+  </div>
+
+  <div *ngIf="metadataList.length > 0" class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead class="thead-light">
+        <tr>
+          <th scope="col" class="col-id">#</th>
+          <th scope="col" class="col-title">Título</th>
+          <th scope="col" class="col-date">Fecha</th>
+          <th scope="col" class="col-time">Hora</th>
+          <th scope="col" class="col-image">Imagen</th>
+          <th scope="col" class="col-feeds">Feeds</th>
+          <th scope="col" class="col-authors">Autores</th>
+          <th scope="col" class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let metadata of paginatedMetadataList; let i = index">
+          <th scope="row">{{ (currentPage - 1) * itemsPerPage + i + 1 }}</th>
+          <td>{{ truncateTitle(metadata.title, 20) }}</td>
+          <td>
+            {{
+              metadata.publicationDate
+                ? (metadata.publicationDate | date : "MMM d, y")
+                : "Sin Fecha de Publicación"
+            }}
+          </td>
+          <td>
+            {{
+              metadata.publicationDate
+                ? metadata.publicationDate.split("T")[1].substring(0, 5).trim()
+                : "Sin Hora de Publicación"
+            }}
+          </td>
+          <td>
+            <img
+              [src]="metadata.imageUrl"
+              alt="{{ metadata.title }}"
+              class="img-thumbnail"
+            />
+          </td>
+          <td>
+            <ng-container *ngFor="let feed of displayFeeds(metadata.feeds)">
+              <div>{{ feed }}</div>
+            </ng-container>
+          </td>
+          <td>{{ displayAuthors(metadata.authors) }}</td>
+          <td class="actions-cell">
+            <div class="btn-group" role="group" aria-label="Acciones">
+              <button
+                *ngIf="metadata.active === 'A'"
+                class="btn btn-sm btn-primary rounded-square"
+                (click)="editMetadata(metadata.id)"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button
+                *ngIf="metadata.active === 'A'"
+                class="btn btn-sm btn-danger rounded-square"
+                (click)="confirmDeactivateOrDeleteMetadata(metadata.id)"
+              >
+                <i class="fas fa-ban"></i>
+              </button>
+              <button
+                *ngIf="metadata.active === 'I'"
+                class="btn btn-sm btn-success rounded-square"
+                (click)="confirmActivateMetadata(metadata.id)"
+              >
+                <i class="fas fa-check"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="filteredMetadataList.length === 0 && metadataList.length > 0">
+    <p>
+      No se encontraron resultados que coincidan con los criterios de búsqueda.
+    </p>
+  </div>
+
+  <div *ngIf="showEditForm" class="modal d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Metadato</h5>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col">
+              <div class="form-group">
+                <label for="editMetadataTitle">Título</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editMetadataTitle"
+                  [(ngModel)]="selectedMetadata.title"
+                />
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="editMetadataPublicationDate"
+                  >Fecha de Publicación</label
+                >
+                <input
+                  type="date"
+                  class="form-control"
+                  id="editMetadataPublicationDate"
+                  [(ngModel)]="selectedMetadata.publicationDate"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              <div class="form-group">
+                <label for="editMetadataImage">Imagen</label>
+                <img
+                  [src]="selectedMetadata.imageUrl"
+                  alt="Imagen Actual"
+                  class="img-thumbnail"
+                  style="max-width: 220px"
+                />
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="editMetadataImageUrl">URL de la Imagen</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editMetadataImageUrl"
+                  [(ngModel)]="selectedMetadata.imageUrl"
+                />
+              </div>
+              <div class="form-group mt-3">
+                <label for="editMetadataPublicationTime"
+                  >Hora de Publicación</label
+                >
+                <input
+                  type="time"
+                  class="form-control"
+                  id="editMetadataPublicationTime"
+                  [(ngModel)]="selectedMetadata.publicationTime"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="form-group mb-3">
+            <label for="editMetadataFeeds">Feeds</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editMetadataFeeds"
+              [(ngModel)]="selectedMetadata.feeds"
+              disabled
+            />
+          </div>
+          <div class="form-group mb-3">
+            <label for="editMetadataAuthors">Autores</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editMetadataAuthors"
+              [(ngModel)]="selectedMetadata.authors"
+              disabled
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-success"
+            (click)="updateMetadata(); showEditForm = false"
+          >
+            <i class="fas fa-check"></i> Guardar Cambios
+          </button>
+          <button class="btn btn-secondary" (click)="showEditForm = false">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paginación -->
+  <nav *ngIf="totalPages() > 1" aria-label="Page navigation">
+    <ul class="pagination justify-content-end">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a
+          class="page-link"
+          (click)="changePage(currentPage - 1)"
+          aria-label="Previous"
+        >
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      <li
+        *ngFor="let page of [].constructor(totalPages()); let pageIndex = index"
+        class="page-item"
+        [class.active]="pageIndex + 1 === currentPage"
+      >
+        <a class="page-link" (click)="changePage(pageIndex + 1)">{{
+          pageIndex + 1
+        }}</a>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages()">
+        <a
+          class="page-link"
+          (click)="changePage(currentPage + 1)"
+          aria-label="Next"
+        >
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- Fin de Paginación -->
+
+  <!-- Fondo oscurecido -->
+  <div *ngIf="showForm || showEditForm" class="modal-backdrop fade show"></div>
+</div>
